@@ -20,7 +20,6 @@ func TestTestGenerate(t *testing.T) {
 	if len(tests) != 1 {
 		t.Fatal("Expected 1 test to be generated")
 	}
-
 }
 
 func TestTestExecution(t *testing.T) {
