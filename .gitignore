@@ -3,6 +3,9 @@
 *.a
 *.so
 
+micros-parser.sublime-project
+micros-parser.sublime-workspace
+
 # Folders
 _obj
 _test
