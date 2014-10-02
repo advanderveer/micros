@@ -1,8 +1,10 @@
-package loader
+package loader_test
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/advanderveer/micros/loader"
 )
 
 var ex1 = `{
@@ -24,8 +26,8 @@ var ex1 = `{
 	]
 }`
 
-func FixNotesSpec(t *testing.T) *Spec {
-	bl := NewBasic()
+func FixNotesSpec(t *testing.T) *loader.Spec {
+	bl := loader.NewBasic()
 
 	s, err := bl.Load(strings.NewReader(ex1))
 	if err != nil {

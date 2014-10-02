@@ -7,25 +7,6 @@ import (
 	"github.com/advanderveer/micros/loader"
 )
 
-var ex1 = `{
-	"endpoints": [
-		{
-			"name": "list_notes",
-			"cases": [
-				{
-					"when": {
-						"method": "GET",
-						"path": "/notes"
-					},
-					"then": {
-						"status_code": 200
-					}
-				}
-			]
-		}
-	]
-}`
-
 func TestCoditionsReading(t *testing.T) {
 	bl := loader.NewBasic()
 
@@ -55,7 +36,7 @@ func TestExpectationsReading(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if s.Endpoints[0].Cases[0].Then.StatusCode != 200 {
-		t.Errorf("Expected statuscode to be: %d", s.Endpoints[0].Cases[0].Then.StatusCode)
+	if s.Endpoints[0].Cases[0].Then.StatusCode != 201 {
+		t.Errorf("Expected statuscode not to be: %d", s.Endpoints[0].Cases[0].Then.StatusCode)
 	}
 }
