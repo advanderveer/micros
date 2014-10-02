@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/advanderveer/micros-parser/generate"
-	"github.com/advanderveer/micros-parser/loader"
+	"github.com/advanderveer/micros/generate"
+	"github.com/advanderveer/micros/loader"
 )
 
 func TestTestGenerate(t *testing.T) {

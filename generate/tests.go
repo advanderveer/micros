@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/advanderveer/micros-parser/loader"
+	"github.com/advanderveer/micros/loader"
 )
 
 type TestSet struct {

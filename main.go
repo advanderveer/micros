@@ -6,7 +6,7 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	"github.com/advanderveer/micros-parser/command"
+	"github.com/advanderveer/micros/command"
 )
 
 var version = "0.0.0-DEV"

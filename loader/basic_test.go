@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/advanderveer/micros-parser/loader"
+	"github.com/advanderveer/micros/loader"
 )
 
 var ex1 = `{
