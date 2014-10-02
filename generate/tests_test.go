@@ -25,20 +25,44 @@ func TestTestGenerate(t *testing.T) {
 
 func TestTestExecution(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "test", 201)
+		http.Error(w, "test", 404)
 	}))
 
 	defer ts.Close()
 
 	rg := generate.NewTests()
 
-	tests, err := rg.Generate(ts.URL, loader.FixNotesSpec(t))
+	sets, err := rg.Generate(ts.URL, loader.FixNotesSpec(t))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = tests[0](http.DefaultClient)
+	err = sets[0].Test(http.DefaultClient)
 	if err == nil {
 		t.Fatal("Expected test to fail")
 	}
+}
+
+func TestMocking(t *testing.T) {
+	rg := generate.NewTests()
+	sets, err := rg.Generate("http://locahost", loader.FixNotesSpec(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ts := httptest.NewServer(sets[0].Mock)
+
+	resp, err := http.Get(ts.URL)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if resp.StatusCode != 201 {
+		t.Fatal("Expected mock to simulate correctly")
+	}
+
+	if sets[0].Assert(resp) != nil {
+		t.Fatal("Asserting response with own assert should always succeed")
+	}
+
 }

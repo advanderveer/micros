@@ -16,7 +16,7 @@ var ex1 = `{
 						"path": "/notes"
 					},
 					"then": {
-						"status_code": 200
+						"status_code": 201
 					}
 				}
 			]
