@@ -20,7 +20,7 @@ func main() {
 
 	//init micros commands
 	cmds := []command.C{
-		command.NewMock(),
+		command.NewTest(),
 	}
 
 	//append to app

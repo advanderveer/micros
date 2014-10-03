@@ -24,9 +24,9 @@ func (c *cmd) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
 	return nil, nil, fmt.Errorf("Command '%s' is not yet implemented", ctx.Command.Name)
 }
 
-func (c *cmd) Action() func(ctx *cli.Context) {
+func (c *cmd) templated(fn func(c *cli.Context) (*template.Template, interface{}, error)) func(ctx *cli.Context) {
 	return func(ctx *cli.Context) {
-		t, data, err := c.Run(ctx)
+		t, data, err := fn(ctx)
 		if err != nil {
 			log.Fatal(err, ", Command: '", ctx.Command.Name, "' Args: ", ctx.Args())
 		}
