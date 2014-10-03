@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/zenazn/goji/web"
+
 	"github.com/advanderveer/micros/loader"
 )
 
@@ -13,20 +15,45 @@ type TestSet struct {
 	Assert  AssertFunc
 	Test    TestFunc
 	Mock    http.HandlerFunc
+	Pattern web.Pattern
 }
 
-type TestFunc func(c *http.Client) error
+type TestFunc func(host string, c *http.Client) error
 type AssertFunc func(resp *http.Response) error
 
+//Generated pattern for matching mock requests to the correct mock handler
+type MockPattern struct {
+	Prototype *http.Request
+}
+
+func (p *MockPattern) Prefix() string {
+	return "/"
+}
+
+// Match the received request to the handler by examining the prototype request
+func (p *MockPattern) Match(r *http.Request, c *web.C) bool {
+
+	//@todo compare incoming request with prototype request
+	if r.URL.Path != p.Prototype.URL.Path {
+		return false
+	}
+
+	return true
+}
+
+func (p *MockPattern) Run(r *http.Request, c *web.C) {}
+
+//A Test set generator
 type Tests struct{}
 
 func NewTests() *Tests {
 	return &Tests{}
 }
 
-func (tg *Tests) generateRequest(host string, c *loader.Case) (*http.Request, error) {
+// Generates an request to be send to the subject based on the case provided by the spec
+func (tg *Tests) generateRequest(c *loader.Case) (*http.Request, error) {
 
-	l, err := url.Parse(host)
+	l, err := url.Parse("/")
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +65,7 @@ func (tg *Tests) generateRequest(host string, c *loader.Case) (*http.Request, er
 	return http.NewRequest(c.When.Method, l.String(), nil)
 }
 
+// Generate an assertion function that checks the response returned by the subject
 func (tg *Tests) generateAssert(c *loader.Case) (AssertFunc, error) {
 	return func(resp *http.Response) error {
 
@@ -51,6 +79,11 @@ func (tg *Tests) generateAssert(c *loader.Case) (AssertFunc, error) {
 	}, nil
 }
 
+func (tg *Tests) generatePattern(r *http.Request) (*MockPattern, error) {
+	return &MockPattern{r}, nil
+}
+
+// Generate the http handler function that writes the expected response based on the specification
 func (tg *Tests) generateMock(c *loader.Case) (http.HandlerFunc, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -62,23 +95,35 @@ func (tg *Tests) generateMock(c *loader.Case) (http.HandlerFunc, error) {
 }
 
 func (tg *Tests) generateTest(req *http.Request, a AssertFunc) (TestFunc, error) {
-	return func(c *http.Client) error {
+	return func(host string, c *http.Client) error {
 
+		//parse overwrite host url
+		h, err := url.Parse(host)
+		if err != nil {
+			return err
+		}
+
+		//overwrite generated with test specific host/scheme
+		req.URL.Host = h.Host
+		req.URL.Scheme = h.Scheme
+
+		//do the actual request
 		resp, err := c.Do(req)
 		if err != nil {
 			return err
 		}
 
+		//and assert resp
 		return a(resp)
 	}, nil
 }
 
-func (tg *Tests) Generate(host string, s *loader.Spec) ([]*TestSet, error) {
+func (tg *Tests) Generate(s *loader.Spec) ([]*TestSet, error) {
 	tests := []*TestSet{}
 
 	for _, ep := range s.Endpoints {
 		for _, c := range ep.Cases {
-			r, err := tg.generateRequest(host, c)
+			r, err := tg.generateRequest(c)
 			if err != nil {
 				return nil, err
 			}
@@ -98,7 +143,12 @@ func (tg *Tests) Generate(host string, s *loader.Spec) ([]*TestSet, error) {
 				return nil, err
 			}
 
-			tests = append(tests, &TestSet{r, a, t, m})
+			p, err := tg.generatePattern(r)
+			if err != nil {
+				return nil, err
+			}
+
+			tests = append(tests, &TestSet{r, a, t, m, p})
 		}
 	}
 

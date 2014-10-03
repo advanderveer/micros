@@ -1,6 +1,7 @@
 package generate_test
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 
 func TestMockServer(t *testing.T) {
 	rg := generate.NewTests()
-	sets, err := rg.Generate("http://locahost", loader.FixNotesSpec(t))
+	sets, err := rg.Generate(loader.FixNotesSpec(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,12 +23,12 @@ func TestMockServer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := http.Get(svr.URL())
+	resp, err := http.Get(fmt.Sprintf("%s/notes", svr.URL()))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_ = resp
-	//@assert mocked resp
-
+	if resp.StatusCode != 201 {
+		t.Fatal("Expected mock to succeed")
+	}
 }

@@ -12,7 +12,7 @@ import (
 func TestTestGenerate(t *testing.T) {
 	rg := generate.NewTests()
 
-	tests, err := rg.Generate("http://locahost/bogus?foo=bar", loader.FixNotesSpec(t))
+	tests, err := rg.Generate(loader.FixNotesSpec(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,27 +24,27 @@ func TestTestGenerate(t *testing.T) {
 
 func TestTestExecution(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "test", 404)
+		http.Error(w, "test", 201)
 	}))
 
 	defer ts.Close()
 
 	rg := generate.NewTests()
 
-	sets, err := rg.Generate(ts.URL, loader.FixNotesSpec(t))
+	sets, err := rg.Generate(loader.FixNotesSpec(t))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = sets[0].Test(http.DefaultClient)
-	if err == nil {
-		t.Fatal("Expected test to fail")
+	err = sets[0].Test(ts.URL, http.DefaultClient)
+	if err != nil {
+		t.Fatalf("Expected test to succeed, but got %s", err)
 	}
 }
 
 func TestMocking(t *testing.T) {
 	rg := generate.NewTests()
-	sets, err := rg.Generate("http://locahost", loader.FixNotesSpec(t))
+	sets, err := rg.Generate(loader.FixNotesSpec(t))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,7 +18,9 @@ func NewServer(sets []*TestSet) *Server {
 		mux:  web.New(),
 	}
 
-	//@tood map sets to mux
+	for _, set := range sets {
+		s.mux.Handle(set.Pattern, set.Mock)
+	}
 
 	s.svr = httptest.NewUnstartedServer(s.mux)
 	return s
