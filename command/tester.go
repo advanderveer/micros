@@ -14,6 +14,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"github.com/advanderveer/micros/generate"
+	"github.com/advanderveer/micros/loader"
 )
 
 var tmpl_test = `tested!`
@@ -113,8 +114,12 @@ func (c *Test) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
 
 	}
 
+	//server factory
+	f := loader.NewFinder(spath)
+	fac := generate.NewFactory(f)
+
 	//generate test sets
-	tgen := generate.NewTests()
+	tgen := generate.NewTests(fac)
 	sets, err := tgen.Generate(spec)
 	if err != nil {
 		return nil, nil, err

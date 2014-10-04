@@ -1,12 +1,9 @@
 package command
 
 import (
-	// "bytes"
-	// "fmt"
 	"io"
 	"net/http"
 	"os"
-	// "os/exec"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -14,7 +11,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"github.com/advanderveer/micros/generate"
-	// "github.com/advanderveer/micros/loader"
+	"github.com/advanderveer/micros/loader"
 )
 
 var tmpl_diag = `diagnosed!`
@@ -67,8 +64,12 @@ func (c *Diag) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
 		return nil, nil, err
 	}
 
+	//server factory
+	f := loader.NewFinder(spath)
+	fac := generate.NewFactory(f)
+
 	//generate test sets
-	tgen := generate.NewTests()
+	tgen := generate.NewTests(fac)
 	sets, err := tgen.Generate(spec)
 	if err != nil {
 		return nil, nil, err

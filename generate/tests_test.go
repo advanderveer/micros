@@ -10,28 +10,32 @@ import (
 )
 
 func TestTestGenerate(t *testing.T) {
-	rg := generate.NewTests()
+	f := loader.NewFinder("../examples/notes.json")
+	fac := generate.NewFactory(f)
+	rg := generate.NewTests(fac)
 
-	tests, err := rg.Generate(loader.FixNotesSpec(t))
+	tests, err := rg.Generate(loadSpec(t, "../examples/notes.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(tests) != 1 {
-		t.Fatal("Expected 1 test to be generated")
+	if len(tests) < 1 {
+		t.Fatal("Expected more then zero tests to be generated")
 	}
 }
 
 func TestTestExecution(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "test", 201)
+		http.Error(w, "test", 200)
 	}))
 
 	defer ts.Close()
 
-	rg := generate.NewTests()
+	f := loader.NewFinder("../examples/notes.json")
+	fac := generate.NewFactory(f)
+	rg := generate.NewTests(fac)
 
-	sets, err := rg.Generate(loader.FixNotesSpec(t))
+	sets, err := rg.Generate(loadSpec(t, "../examples/notes.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,8 +47,10 @@ func TestTestExecution(t *testing.T) {
 }
 
 func TestMocking(t *testing.T) {
-	rg := generate.NewTests()
-	sets, err := rg.Generate(loader.FixNotesSpec(t))
+	f := loader.NewFinder("../examples/notes.json")
+	fac := generate.NewFactory(f)
+	rg := generate.NewTests(fac)
+	sets, err := rg.Generate(loadSpec(t, "../examples/notes.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +62,7 @@ func TestMocking(t *testing.T) {
 		t.Error(err)
 	}
 
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != 200 {
 		t.Fatal("Expected mock to simulate correctly")
 	}
 

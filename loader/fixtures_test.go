@@ -19,7 +19,8 @@ var ex1 = `{
 					},
 					"then": {
 						"status_code": 201
-					}
+					},
+					"while": [{"service": "users"}]
 				}
 			]
 		}

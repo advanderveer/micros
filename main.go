@@ -24,6 +24,7 @@ func main() {
 	//init micros commands
 	cmds := []command.C{
 		command.NewTest(out),
+		command.NewDiag(out),
 	}
 
 	//append to app

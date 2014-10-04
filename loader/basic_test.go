@@ -26,6 +26,11 @@ func TestCoditionsReading(t *testing.T) {
 	if s.Endpoints[0].Cases[0].When.Path != "/notes" {
 		t.Errorf("Unexpected path: %s", s.Endpoints[0].Cases[0].When.Path)
 	}
+
+	if s.Endpoints[0].Cases[0].While[0].Service != "users" {
+		t.Errorf("Unexpected while: %s", s.Endpoints[0].Cases[0].While[0].Service)
+	}
+
 }
 
 func TestExpectationsReading(t *testing.T) {

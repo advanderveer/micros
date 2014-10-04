@@ -23,7 +23,10 @@
 					},
 					"then": {
 						"status_code": 201
-					}
+					},
+					"while": [
+						{"service": "users"}
+					]
 				}
 			]
 		}

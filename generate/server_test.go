@@ -10,8 +10,10 @@ import (
 )
 
 func TestMockServer(t *testing.T) {
-	rg := generate.NewTests()
-	sets, err := rg.Generate(loader.FixNotesSpec(t))
+	f := loader.NewFinder("../examples/notes.json")
+	fac := generate.NewFactory(f)
+	rg := generate.NewTests(fac)
+	sets, err := rg.Generate(loadSpec(t, f.Entry))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +30,27 @@ func TestMockServer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if resp.StatusCode != 201 {
+	if resp.StatusCode != 200 {
 		t.Fatal("Expected mock to succeed")
+	}
+}
+
+func TestServerFactory(t *testing.T) {
+
+	f := loader.NewFinder("../examples/notes.json")
+	fac := generate.NewFactory(f)
+
+	svr1, err := fac.Create("notes")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	svr2, err := fac.Create("notes")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if svr1 != svr2 {
+		t.Fatal("Expected factory create to cache result")
 	}
 }

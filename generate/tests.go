@@ -10,12 +10,14 @@ import (
 	"github.com/advanderveer/micros/loader"
 )
 
+//One set per test case
 type TestSet struct {
-	Request *http.Request
-	Assert  AssertFunc
-	Test    TestFunc
-	Mock    http.HandlerFunc
-	Pattern web.Pattern
+	Request           *http.Request
+	Assert            AssertFunc
+	Test              TestFunc
+	Mock              http.HandlerFunc
+	Pattern           web.Pattern
+	DependencyServers []*Server
 }
 
 type TestFunc func(host string, c *http.Client) error
@@ -49,10 +51,12 @@ func (p *MockPattern) Match(r *http.Request, c *web.C) bool {
 func (p *MockPattern) Run(r *http.Request, c *web.C) {}
 
 //A Test set generator
-type Tests struct{}
+type Tests struct {
+	factory *Factory
+}
 
-func NewTests() *Tests {
-	return &Tests{}
+func NewTests(f *Factory) *Tests {
+	return &Tests{f}
 }
 
 // Generates an request to be send to the subject based on the case provided by the spec
@@ -82,6 +86,21 @@ func (tg *Tests) generateAssert(c *loader.Case) (AssertFunc, error) {
 
 		return nil
 	}, nil
+}
+
+func (tg *Tests) generateDependencyServers(c *loader.Case) ([]*Server, error) {
+	svrs := []*Server{}
+
+	for _, dep := range c.While {
+		svr, err := tg.factory.Create(dep.Service)
+		if err != nil {
+			return nil, err
+		}
+
+		svrs = append(svrs, svr)
+	}
+
+	return svrs, nil
 }
 
 func (tg *Tests) generatePattern(r *http.Request) (*MockPattern, error) {
@@ -153,7 +172,12 @@ func (tg *Tests) Generate(s *loader.Spec) ([]*TestSet, error) {
 				return nil, err
 			}
 
-			tests = append(tests, &TestSet{r, a, t, m, p})
+			svrs, err := tg.generateDependencyServers(c)
+			if err != nil {
+				return nil, err
+			}
+
+			tests = append(tests, &TestSet{r, a, t, m, p, svrs})
 		}
 	}
 
