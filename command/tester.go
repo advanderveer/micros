@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,10 +13,10 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	"github.com/advanderveer/micros/loader"
+	"github.com/advanderveer/micros/generate"
 )
 
-var tmpl = `tested!`
+var tmpl_test = `tested!`
 
 type Test struct {
 	*cmd
@@ -32,11 +33,11 @@ func (c *Test) Name() string {
 }
 
 func (c *Test) Description() string {
-	return "Test dependent services"
+	return "Test a service"
 }
 
 func (c *Test) Usage() string {
-	return "Test dependent services."
+	return "Test a micro service."
 }
 
 func (c *Test) Flags() []cli.Flag {
@@ -57,21 +58,17 @@ func (c *Test) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
 		return nil, nil, err
 	}
 
+	target := ctx.Args().First()
+	if target == "" {
+		return nil, nil, NoTargetError
+	}
+
 	spath := strings.TrimSpace(ctx.String("spec"))
 	if spath == "" {
 		return nil, nil, NoSpecPathError
 	}
 
-	//open spec file
-	sfile, err := os.Open(filepath.Join(wd, spath))
-	if err != nil {
-		return nil, nil, err
-	}
-	defer sfile.Close()
-
-	//load service spec
-	bl := loader.NewBasic()
-	spec, err := bl.Load(sfile)
+	spec, err := c.loadSpec(filepath.Join(wd, spath))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -116,11 +113,20 @@ func (c *Test) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
 
 	}
 
-	_ = spec
+	//generate test sets
+	tgen := generate.NewTests()
+	sets, err := tgen.Generate(spec)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	//Test each dependencies
+	//runs every case
+	for _, set := range sets {
+		err := set.Test(target, http.DefaultClient)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 
-	//@todo implement
-
-	return template.Must(template.New("test.success").Parse(tmpl)), nil, nil
+	return template.Must(template.New("test.success").Parse(tmpl_test)), nil, nil
 }

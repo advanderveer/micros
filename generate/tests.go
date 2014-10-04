@@ -34,7 +34,12 @@ func (p *MockPattern) Prefix() string {
 func (p *MockPattern) Match(r *http.Request, c *web.C) bool {
 
 	//@todo compare incoming request with prototype request
+
 	if r.URL.Path != p.Prototype.URL.Path {
+		return false
+	}
+
+	if r.Method != p.Prototype.Method {
 		return false
 	}
 

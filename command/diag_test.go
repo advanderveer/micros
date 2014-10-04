@@ -9,7 +9,7 @@ import (
 	"github.com/advanderveer/micros/command"
 )
 
-func TestNotesPreAndEnv(t *testing.T) {
+func TestNotesDiagNotes(t *testing.T) {
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			w.WriteHeader(200)
@@ -20,9 +20,9 @@ func TestNotesPreAndEnv(t *testing.T) {
 	}))
 
 	out := bytes.NewBuffer(nil)
-	cmd := command.NewTest(out)
+	cmd := command.NewDiag(out)
 
 	//expect to output env data two times
-	AssertCommand(t, cmd, []string{"--pre='env'", "--pre='env'", "--spec=../examples/notes.json", svr.URL}, `(?s).*PATH.*PATH.*`, out)
+	AssertCommand(t, cmd, []string{"--spec=../examples/notes.json", svr.URL}, `(?s).*diagnosed.*`, out)
 
 }
