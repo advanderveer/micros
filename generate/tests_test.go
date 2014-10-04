@@ -14,13 +14,17 @@ func TestTestGenerate(t *testing.T) {
 	fac := generate.NewFactory(f)
 	rg := generate.NewTests(fac)
 
-	tests, err := rg.Generate(loadSpec(t, "../examples/notes.json"))
+	sets, err := rg.Generate(loadSpec(t, "../examples/notes.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(tests) < 1 {
+	if len(sets) < 1 {
 		t.Fatal("Expected more then zero tests to be generated")
+	}
+
+	if sets[1].DependencyServers[0] != sets[2].DependencyServers[0] {
+		t.Fatal("Expected second and third dependency server to be equal")
 	}
 }
 

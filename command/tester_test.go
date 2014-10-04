@@ -11,7 +11,7 @@ import (
 
 func TestNotesPreAndEnv(t *testing.T) {
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
+		if r.Method == "GET" || r.Method == "DELETE" {
 			w.WriteHeader(200)
 		} else {
 			w.WriteHeader(201)

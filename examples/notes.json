@@ -29,6 +29,22 @@
 					]
 				}
 			]
+		},{
+			"name": "delete_notes",
+			"cases": [
+				{
+					"when": {
+						"method": "DELETE",
+						"path": "/notes"
+					},
+					"then": {
+						"status_code": 200
+					},
+					"while": [
+						{"service": "users"}
+					]
+				}
+			]
 		}
 	]
 }
