@@ -1,6 +1,7 @@
 package generate
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"os"
 
@@ -14,13 +15,31 @@ type Server struct {
 	sets []*TestSet
 	mux  *web.Mux
 	svr  *httptest.Server
+
+	Tape []*http.Request
 }
 
 func NewServer(sets []*TestSet) *Server {
 	s := &Server{
 		sets: sets,
 		mux:  web.New(),
+
+		Tape: nil,
 	}
+
+	//capture traffic if we have a tape
+	s.mux.Use(func(c *web.C, h http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+
+			//if we have a tampe, record the request
+			if s.Tape != nil {
+				s.Tape = append(s.Tape, r)
+			}
+
+			h.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	})
 
 	for _, set := range sets {
 		s.mux.Handle(set.Pattern, set.Mock)
@@ -28,6 +47,16 @@ func NewServer(sets []*TestSet) *Server {
 
 	s.svr = httptest.NewUnstartedServer(s.mux)
 	return s
+}
+
+//set recording flag to true
+func (s *Server) Record() {
+	s.Tape = []*http.Request{}
+}
+
+//reset tape and stop recording
+func (s *Server) Rewind() {
+	s.Tape = nil
 }
 
 func (s *Server) Start() error {

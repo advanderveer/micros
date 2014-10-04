@@ -22,7 +22,7 @@ func TestNotesPreAndEnv(t *testing.T) {
 	out := bytes.NewBuffer(nil)
 	cmd := command.NewTest(out)
 
-	//expect to output env data two times
-	AssertCommand(t, cmd, []string{"--pre='env'", "--pre='env'", "--spec=../examples/notes.json", svr.URL}, `(?s).*PATH.*PATH.*`, out)
+	//expect to output env data two times, disable dependency checks
+	AssertCommand(t, cmd, []string{"--pre='env'", "--pre='env'", "--spec=../examples/notes.json", "--no-dependency-checks", svr.URL}, `(?s).*PATH.*PATH.*`, out)
 
 }

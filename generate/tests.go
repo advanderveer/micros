@@ -15,7 +15,7 @@ type TestSet struct {
 	Request           *http.Request
 	Assert            AssertFunc
 	Test              TestFunc
-	Mock              http.HandlerFunc
+	Mock              web.HandlerFunc
 	Pattern           web.Pattern
 	DependencyServers []*Server
 }
@@ -53,10 +53,14 @@ func (p *MockPattern) Run(r *http.Request, c *web.C) {}
 //A Test set generator
 type Tests struct {
 	factory *Factory
+
+	IgnoreDependencyChecks bool
 }
 
 func NewTests(f *Factory) *Tests {
-	return &Tests{f}
+	return &Tests{
+		factory: f,
+	}
 }
 
 // Generates an request to be send to the subject based on the case provided by the spec
@@ -66,6 +70,8 @@ func (tg *Tests) generateRequest(c *loader.Case) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// @todo start recording
 
 	// @todo specify more then just the path
 
@@ -108,17 +114,31 @@ func (tg *Tests) generatePattern(r *http.Request) (*MockPattern, error) {
 }
 
 // Generate the http handler function that writes the expected response based on the specification
-func (tg *Tests) generateMock(c *loader.Case) (http.HandlerFunc, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (tg *Tests) generateMock(c *loader.Case, svrs []*Server) (web.HandlerFunc, error) {
+	return web.HandlerFunc(func(ctx web.C, w http.ResponseWriter, r *http.Request) {
 
 		// @todo write mock handlers more sofisticaed according to spec
 
 		w.WriteHeader(c.Then.StatusCode)
 
+		// mock should also call the dependencies
+		for _, dep := range svrs {
+			loc := dep.URL()
+			if loc == "" {
+				dep.Start()
+				loc = dep.URL()
+			}
+
+			_, err := http.Get(dep.URL())
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Mock couldn't GET dep service @ %s", dep.URL()), http.StatusInternalServerError)
+			}
+		}
+
 	}), nil
 }
 
-func (tg *Tests) generateTest(req *http.Request, a AssertFunc) (TestFunc, error) {
+func (tg *Tests) generateTest(req *http.Request, a AssertFunc, svrs []*Server) (TestFunc, error) {
 	return func(host string, c *http.Client) error {
 
 		//parse overwrite host url
@@ -131,10 +151,27 @@ func (tg *Tests) generateTest(req *http.Request, a AssertFunc) (TestFunc, error)
 		req.URL.Host = h.Host
 		req.URL.Scheme = h.Scheme
 
+		//start recording on each the dep servers
+		for _, svr := range svrs {
+			svr.Record()
+			defer svr.Rewind()
+		}
+
 		//do the actual request
 		resp, err := c.Do(req)
 		if err != nil {
 			return err
+		}
+
+		//@todo figure out how to give tested service time (timeout) to send request to dependency
+
+		//check recording
+		//@todo not only check if the svr was reached
+		//@todo eleborate error message
+		for _, svr := range svrs {
+			if !tg.IgnoreDependencyChecks && svr.Tape != nil && len(svr.Tape) < 1 {
+				return fmt.Errorf("Dependency did not receive the expected request")
+			}
 		}
 
 		//and assert resp
@@ -147,6 +184,7 @@ func (tg *Tests) Generate(s *loader.Spec) ([]*TestSet, error) {
 
 	for _, ep := range s.Endpoints {
 		for _, c := range ep.Cases {
+
 			r, err := tg.generateRequest(c)
 			if err != nil {
 				return nil, err
@@ -157,22 +195,22 @@ func (tg *Tests) Generate(s *loader.Spec) ([]*TestSet, error) {
 				return nil, err
 			}
 
-			t, err := tg.generateTest(r, a)
+			svrs, err := tg.generateDependencyServers(c)
 			if err != nil {
 				return nil, err
 			}
 
-			m, err := tg.generateMock(c)
+			t, err := tg.generateTest(r, a, svrs)
+			if err != nil {
+				return nil, err
+			}
+
+			m, err := tg.generateMock(c, svrs)
 			if err != nil {
 				return nil, err
 			}
 
 			p, err := tg.generatePattern(r)
-			if err != nil {
-				return nil, err
-			}
-
-			svrs, err := tg.generateDependencyServers(c)
 			if err != nil {
 				return nil, err
 			}

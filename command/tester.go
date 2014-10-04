@@ -46,6 +46,7 @@ func (c *Test) Flags() []cli.Flag {
 		cli.StringSliceFlag{Name: "pre, p", Value: &cli.StringSlice{}, Usage: "Execute command after the mocks where setupt and before the tests are run"},
 		cli.StringFlag{Name: "spec, s", Value: "", Usage: "Provide the path to a local spec"},
 		cli.StringFlag{Name: "runner", Value: "sh -c {{.}}", Usage: "Shell wrapper that runs each command."},
+		cli.BoolFlag{Name: "no-dependency-checks", Usage: "Disable the checking of dependencies being called."},
 	}
 }
 
@@ -120,6 +121,8 @@ func (c *Test) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
 
 	//generate test sets
 	tgen := generate.NewTests(fac)
+	tgen.IgnoreDependencyChecks = ctx.Bool("no-dependency-checks")
+
 	sets, err := tgen.Generate(spec)
 	if err != nil {
 		return nil, nil, err
