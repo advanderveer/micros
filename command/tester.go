@@ -1,7 +1,7 @@
 package command
 
 import (
-	// "fmt"
+	"io"
 	"text/template"
 
 	"github.com/codegangsta/cli"
@@ -13,9 +13,9 @@ type Test struct {
 	*cmd
 }
 
-func NewTest() *Test {
+func NewTest(out io.Writer) *Test {
 	return &Test{
-		cmd: &cmd{},
+		cmd: newCmd(out),
 	}
 }
 
@@ -32,7 +32,9 @@ func (c *Test) Usage() string {
 }
 
 func (c *Test) Flags() []cli.Flag {
-	return []cli.Flag{}
+	return []cli.Flag{
+		cli.StringSliceFlag{Name: "pre", Value: &cli.StringSlice{}, Usage: ""},
+	}
 }
 
 func (c *Test) Action() func(ctx *cli.Context) {
@@ -40,8 +42,6 @@ func (c *Test) Action() func(ctx *cli.Context) {
 }
 
 func (c *Test) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
-
-	// fmt.Println(ctx.StringSlice("key"))
 
 	//load service spec
 

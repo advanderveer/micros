@@ -1,23 +1,16 @@
 package command_test
 
 import (
-	"flag"
+	"bytes"
 	"testing"
-
-	"github.com/codegangsta/cli"
 
 	"github.com/advanderveer/micros/command"
 )
 
 func TestNotesPreAndEnv(t *testing.T) {
-	app := cli.NewApp()
 
-	set := flag.NewFlagSet("x", 0)
-	set.Parse([]string{"--pre=aaaa"})
+	out := bytes.NewBuffer(nil)
+	cmd := command.NewTest(out)
 
-	ctx := cli.NewContext(app, set, set)
-
-	cmd := command.NewTest()
-
-	AssertOutput(t, ctx, `.*tested.*`, cmd.Run)
+	AssertCommand(t, cmd, []string{"--pre=a", "--pre=b"}, `.*tested.*`, out)
 }

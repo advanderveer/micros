@@ -4,30 +4,22 @@ import (
 	"bytes"
 	"regexp"
 	"testing"
-	"text/template"
+
+	"github.com/advanderveer/micros/command"
 
 	"github.com/codegangsta/cli"
 )
 
-func AssertOutput(t *testing.T, ctx *cli.Context, pattern string, fn func(c *cli.Context) (*template.Template, interface{}, error)) {
-	var out string
+func AssertCommand(t *testing.T, cmd command.C, args []string, pattern string, out *bytes.Buffer) {
+	app := cli.NewApp()
+	app.Flags = cmd.Flags()
+	app.Action = cmd.Action()
 
-	tmpl, data, err := fn(ctx)
-	if err != nil {
-		t.Error(err)
-		out = err.Error()
-	} else {
+	//prepend zero-length string
+	args = append([]string{""}, args...)
+	app.Run(args)
 
-		buff := bytes.NewBuffer(nil)
-		err = tmpl.Execute(buff, data)
-		if err != nil {
-			t.Error(err)
-		}
-
-		out = buff.String()
-	}
-
-	m, err := regexp.MatchString(pattern, out)
+	m, err := regexp.MatchString(pattern, out.String())
 	if err != nil {
 		t.Fatal(err)
 	}

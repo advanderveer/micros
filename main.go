@@ -18,9 +18,12 @@ func main() {
 	app.Usage = "micro-service test and development environment"
 	app.Version = fmt.Sprintf("%s (%s)", version, build)
 
+	//specify output
+	out := os.Stdout
+
 	//init micros commands
 	cmds := []command.C{
-		command.NewTest(),
+		command.NewTest(out),
 	}
 
 	//append to app

@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"text/template"
@@ -18,7 +19,17 @@ type C interface {
 	Flags() []cli.Flag
 }
 
-type cmd struct{}
+type cmd struct {
+	out io.Writer
+}
+
+func newCmd(out io.Writer) *cmd {
+	if out == nil {
+		out = os.Stdout
+	}
+
+	return &cmd{out}
+}
 
 func (c *cmd) Run(ctx *cli.Context) (*template.Template, interface{}, error) {
 	return nil, nil, fmt.Errorf("Command '%s' is not yet implemented", ctx.Command.Name)
@@ -31,12 +42,9 @@ func (c *cmd) templated(fn func(c *cli.Context) (*template.Template, interface{}
 			log.Fatal(err, ", Command: '", ctx.Command.Name, "' Args: ", ctx.Args())
 		}
 
-		err = t.Execute(os.Stdout, data)
+		err = t.Execute(c.out, data)
 		if err != nil {
 			log.Fatal("Template Error: ", err)
 		}
-
-		//end with newline
-		os.Stdout.WriteString("\n")
 	}
 }
