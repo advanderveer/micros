@@ -15,10 +15,17 @@ func NewFinder(entry string) *Finder {
 	return &Finder{entry}
 }
 
-func (f *Finder) Find(name string) (io.Reader, error) {
-	dir := path.Dir(f.Entry)
+func (f *Finder) FindPath(name string) (string, error) {
+	return path.Join(path.Dir(f.Entry), fmt.Sprintf("%s.json", name)), nil
+}
 
-	src, err := os.Open(path.Join(dir, fmt.Sprintf("%s.json", name)))
+func (f *Finder) Find(name string) (io.Reader, error) {
+	path, err := f.FindPath(name)
+	if err != nil {
+		return nil, fmt.Errorf("could not open %s, (entry: %s), %s", name, f.Entry, err)
+	}
+
+	src, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s, (entry: %s), %s", name, f.Entry, err)
 	}
